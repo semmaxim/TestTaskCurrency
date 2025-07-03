@@ -1,0 +1,5 @@
+{
+  "DatabaseMicroserviceAddress": "http://localhost:5295",
+  "FinanceMicroserviceAddress": "http://localhost:5146",
+  "UsersMicroserviceAddress": "http://localhost:5053"
+}

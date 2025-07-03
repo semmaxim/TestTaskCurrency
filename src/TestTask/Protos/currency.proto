@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package currency;
+
+// Сервис обмена валютной информацией между системами
+service CurrencyService {
+  rpc SetCurrencyRates(SetCurrencyRatesRequest) returns (SetCurrencyRatesResponse); // Метод отправки валютных курсов
+  rpc GetCurrencyRates(GetCurrencyRatesRequest) returns (GetCurrencyRatesResponse); // Метод получения валютных курсов
+}
+
+// Сообщение с информацией о валюте и её курсе
+message CurrencyRate {
+  string code = 1; // Код валюты (например, EUR)
+  string name = 2; // Наименование валюты.
+  string rate = 3; // Курс валюты относительно базовой валюты (рубля)
+}
+
+// Запрос передачи списка валют и их курсов
+message SetCurrencyRatesRequest {
+  repeated CurrencyRate rates = 1; // Массив валют
+}
+
+// Простое подтверждение успешной обработки запроса
+message SetCurrencyRatesResponse {
+  bool success = 1; // Флаг успешного завершения операции
+}
+
+// Запрос получения курсов валют
+message GetCurrencyRatesRequest {
+  repeated string codes = 1; // Массив кодов валют
+}
+
+// Простое подтверждение успешной обработки запроса
+message GetCurrencyRatesResponse {
+  repeated CurrencyRate rates = 1; // Массив валют
+}

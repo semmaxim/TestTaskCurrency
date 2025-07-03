@@ -1,0 +1,9 @@
+{
+  "Jwt": {
+    "SecretKeyBase64": "fSIgTcO+uTorBY9z1tqV+CJLZkoympjvf/Jsk1UN64121F4+O+oJVHCNtpPyPunpMnuUcEGqMrjHie8Xa1AItg==",
+    "TokenCookieName": "auth_jwt_token",
+    "Lifetime": "7.00:00:00",
+    "Issuer": "TestTaskServer",
+    "Audience": "TestTaskClient"
+  }
+}

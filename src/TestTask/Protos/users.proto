@@ -1,0 +1,68 @@
+syntax = "proto3";
+
+package users;
+
+// Описание сервиса управления пользователями
+service UsersService {
+  // Проверяет наличие пользователя с указанным логином
+  rpc IsUserExists(IsUserExistsRequest) returns (IsUserExistsResponse);
+
+  // Регистрация нового пользователя
+  rpc AddUser(AddUserRequest) returns (AddUserResponse);
+
+  // Проверка пользователя по логину и паролю
+  rpc ValidateUser(ValidateUserRequest) returns (ValidateUserResponse);
+
+  // Получение курсов по логину
+  rpc GetRates(GetRatesRequest) returns (GetRatesResponse);
+}
+
+// Запрос проверки существования пользователя
+message IsUserExistsRequest {
+  string login = 1;
+}
+
+// Ответ проверки существования пользователя
+message IsUserExistsResponse {
+  bool exists = 1;
+}
+
+// Запрос добавления нового пользователя
+message AddUserRequest {
+  string login = 1;
+  string password = 2;
+  repeated string codes = 3;
+}
+
+// Ответ успешного добавления пользователя
+message AddUserResponse {
+  bool success = 1;
+}
+
+// Запрос авторизации пользователя
+message ValidateUserRequest {
+  string login = 1;
+  string password = 2;
+}
+
+// Ответ успешной авторизации пользователя
+message ValidateUserResponse {
+  bool correct = 1;
+}
+
+// Запрос получения кодов пользователя
+message GetRatesRequest {
+  string login = 1;
+}
+
+// Сообщение с информацией о валюте и её курсе
+message CurrencyRate {
+  string code = 1; // Код валюты (например, EUR)
+  string name = 2; // Наименование валюты.
+  string rate = 3; // Курс валюты относительно базовой валюты (рубля)
+}
+
+// Ответ с информацией о курсах валют
+message GetRatesResponse {
+  repeated CurrencyRate rates = 1; // Массив валют
+}

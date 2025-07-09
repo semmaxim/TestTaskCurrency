@@ -4,7 +4,7 @@ using Grpc.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Users;
+using Currency;
 
 namespace FinanceMicroserviceTests.Controllers
 {
@@ -14,25 +14,25 @@ namespace FinanceMicroserviceTests.Controllers
 		[TestInitialize]
 		public void Initialize()
 		{
-			UsersServiceClientMock = new Mock<UsersService.UsersServiceClient>(MockBehavior.Strict);
+			CurrencyServiceClientMock = new Mock<CurrencyService.CurrencyServiceClient>(MockBehavior.Strict);
 		}
 
-		private Mock<UsersService.UsersServiceClient> UsersServiceClientMock;
+		private Mock<CurrencyService.CurrencyServiceClient> CurrencyServiceClientMock;
 
 		[TestMethod()]
 		public async Task GetRatesTest()
 		{
 			const string login = "some_login";
-			var expectedResponse = new GetRatesResponse();
+			var expectedResponse = new GetCurrencyRatesForUserResponse();
 			expectedResponse.Rates.AddRange([new CurrencyRate{ Code = "USD", Name ="Доллар", Rate = "100"}, new CurrencyRate { Code = "EUR", Name = "Евро", Rate = "150" }]);
-			UsersServiceClientMock.Setup(client => client.GetRatesAsync(
-					It.Is<GetRatesRequest>(request => request.Login == login),
+			CurrencyServiceClientMock.Setup(client => client.GetCurrencyRatesForUserAsync(
+					It.Is<GetCurrencyRatesForUserRequest>(request => request.Login == login),
 					It.IsAny<Metadata>(),
 					It.IsAny<DateTime?>(),
 					It.IsAny<CancellationToken>()))
-				.Returns(new AsyncUnaryCall<GetRatesResponse>(Task.FromResult(expectedResponse), null!, null!, null!, null!));
+				.Returns(new AsyncUnaryCall<GetCurrencyRatesForUserResponse>(Task.FromResult(expectedResponse), null!, null!, null!, null!));
 			var claimsPrincipal = new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Name, login)]));
-			var controller = new FinanceController(UsersServiceClientMock.Object)
+			var controller = new FinanceController(CurrencyServiceClientMock.Object)
 			{
 				ControllerContext = new ControllerContext
 				{

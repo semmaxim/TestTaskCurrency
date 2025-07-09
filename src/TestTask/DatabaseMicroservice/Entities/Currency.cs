@@ -12,5 +12,7 @@ public class Currency
 	[MaxLength(100)]
 	public string Name { get; set; } = String.Empty;
 
-	public decimal Rate { get; set; }
+	public decimal? Rate { get; set; }
+
+	public List<User> Users { get; set; } = [];
 }

@@ -10,7 +10,10 @@ public class User
 	public string Name { get; set; } = String.Empty;
 
 	[MaxLength(100)]
-	public string Password { get; set; } = String.Empty;
+	public string PasswordHash { get; set; } = String.Empty;
 
-	public List<string> ObservableCurrencyCodes { get; set; } = [];
+	[MaxLength(200)]
+	public string PasswordSalt { get; set; } = String.Empty;
+
+	public List<Currency> Currencies { get; set; } = [];
 }

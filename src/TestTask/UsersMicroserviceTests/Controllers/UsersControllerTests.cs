@@ -3,10 +3,9 @@ using JwtLibrary.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using Newtonsoft.Json.Linq;
-using System.Security.Claims;
 using Users;
 using UsersMicroservice.Controllers;
+using UsersMicroservice.Services;
 
 namespace UsersMicroserviceTests.Controllers
 {
@@ -18,13 +17,17 @@ namespace UsersMicroserviceTests.Controllers
 		{
 			UsersServiceClientMock = new Mock<UsersService.UsersServiceClient>(MockBehavior.Strict);
 			JwtServiceMock = new Mock<IJwtService>(MockBehavior.Strict);
+			PasswordServiceMock = new Mock<IPasswordService>(MockBehavior.Strict);
 		}
 
 		private Mock<UsersService.UsersServiceClient> UsersServiceClientMock;
 		private Mock<IJwtService> JwtServiceMock;
+		private Mock<IPasswordService> PasswordServiceMock;
 
 		private const string Login = "some_login";
 		private const string Password = "pwd";
+		private const string PasswordHash = "pwd_hash";
+		private const string PasswordSalt = "pwd_salt";
 		private readonly List<string> Codes = ["USD", "EUR"];
 
 		private const string CookieName = "some_cookie_name";
@@ -42,7 +45,7 @@ namespace UsersMicroserviceTests.Controllers
 					It.IsAny<CancellationToken>()))
 				.Returns(new AsyncUnaryCall<IsUserExistsResponse>(Task.FromResult(isUserExistResponse), null!, null!, null!, null!));
 
-			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object);
+			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object, PasswordServiceMock.Object);
 
 			var result = await controller.Register(Login, Password, Codes);
 			Assert.IsInstanceOfType<ConflictObjectResult>(result);
@@ -62,13 +65,16 @@ namespace UsersMicroserviceTests.Controllers
 				.Returns(new AsyncUnaryCall<IsUserExistsResponse>(Task.FromResult(isUserExistResponse), null!, null!, null!, null!));
 			var addUserResponse = new AddUserResponse { Success = false };
 			UsersServiceClientMock.Setup(client => client.AddUserAsync(
-					It.Is<AddUserRequest>(request => request.Login == Login && request.Password == Password && request.Codes.SequenceEqual(Codes)),
+					It.Is<AddUserRequest>(request => request.Login == Login && request.PasswordHash == PasswordHash && request.PasswordSalt == PasswordSalt && request.Codes.SequenceEqual(Codes)),
 					It.IsAny<Metadata>(),
 					It.IsAny<DateTime?>(),
 					It.IsAny<CancellationToken>()))
 				.Returns(new AsyncUnaryCall<AddUserResponse>(Task.FromResult(addUserResponse), null!, null!, null!, null!));
+			var passwordHash = PasswordHash;
+			var passwordSalt = PasswordSalt;
+			PasswordServiceMock.Setup(service => service.GenerateCredentials(Password, out passwordHash, out passwordSalt));
 
-			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object);
+			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object, PasswordServiceMock.Object);
 
 			await Assert.ThrowsExceptionAsync<Exception>(async () => await controller.Register(Login, Password, Codes));
 		}
@@ -85,13 +91,16 @@ namespace UsersMicroserviceTests.Controllers
 				.Returns(new AsyncUnaryCall<IsUserExistsResponse>(Task.FromResult(isUserExistResponse), null!, null!, null!, null!));
 			var addUserResponse = new AddUserResponse { Success = true };
 			UsersServiceClientMock.Setup(client => client.AddUserAsync(
-					It.Is<AddUserRequest>(request => request.Login == Login && request.Password == Password && request.Codes.SequenceEqual(Codes)),
+					It.Is<AddUserRequest>(request => request.Login == Login && request.PasswordHash == PasswordHash && request.PasswordSalt == PasswordSalt && request.Codes.SequenceEqual(Codes)),
 					It.IsAny<Metadata>(),
 					It.IsAny<DateTime?>(),
 					It.IsAny<CancellationToken>()))
 				.Returns(new AsyncUnaryCall<AddUserResponse>(Task.FromResult(addUserResponse), null!, null!, null!, null!));
+			var passwordHash = PasswordHash;
+			var passwordSalt = PasswordSalt;
+			PasswordServiceMock.Setup(service => service.GenerateCredentials(Password, out passwordHash, out passwordSalt));
 
-			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object);
+			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object, PasswordServiceMock.Object);
 
 			var result = await controller.Register(Login, Password, Codes);
 			Assert.IsInstanceOfType<OkResult>(result);
@@ -104,15 +113,20 @@ namespace UsersMicroserviceTests.Controllers
 		[TestMethod]
 		public async Task LoginWithWrongCredentialsTest()
 		{
-			var validateUserResponse = new ValidateUserResponse { Correct = false };
-			UsersServiceClientMock.Setup(client => client.ValidateUserAsync(
-					It.Is<ValidateUserRequest>(request => request.Login == Login && request.Password == Password),
-					It.IsAny<Metadata>(),
-					It.IsAny<DateTime?>(),
-					It.IsAny<CancellationToken>()))
-				.Returns(new AsyncUnaryCall<ValidateUserResponse>(Task.FromResult(validateUserResponse), null!, null!, null!, null!));
+			var getUserCredentialsResponse = new GetUserCredentialsResponse { PasswordHash = PasswordHash, PasswordSalt = PasswordSalt };
+			UsersServiceClientMock.Setup(client => client.GetUserCredentialsAsync(
+				It.Is<GetUserCredentialsRequest>(request => request.Login == Login),
+				It.IsAny<Metadata>(),
+				It.IsAny<DateTime?>(),
+				It.IsAny<CancellationToken>()))
+				.Returns(new AsyncUnaryCall<GetUserCredentialsResponse>(Task.FromResult(getUserCredentialsResponse), null!, null!, null!, null!));
+			PasswordServiceMock.Setup(service => service.ValidateCredentials(
+					It.Is<string>(s => s == Password),
+					It.Is<string>(s => s == PasswordHash),
+					It.Is<string>(s => s == PasswordSalt)))
+				.Returns(false);
 
-			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object);
+			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object, PasswordServiceMock.Object);
 
 			var result = await controller.Login(Login, Password);
 			Assert.IsInstanceOfType<UnauthorizedResult>(result);
@@ -121,20 +135,25 @@ namespace UsersMicroserviceTests.Controllers
 		[TestMethod]
 		public async Task LoginOkTest()
 		{
-			var validateUserResponse = new ValidateUserResponse { Correct = true };
 			var lifetime = TimeSpan.FromSeconds(30);
 			var token = "some_very_large_token";
-			UsersServiceClientMock.Setup(client => client.ValidateUserAsync(
-					It.Is<ValidateUserRequest>(request => request.Login == Login && request.Password == Password),
+			var getUserCredentialsResponse = new GetUserCredentialsResponse { PasswordHash = PasswordHash, PasswordSalt = PasswordSalt };
+			UsersServiceClientMock.Setup(client => client.GetUserCredentialsAsync(
+					It.Is<GetUserCredentialsRequest>(request => request.Login == Login),
 					It.IsAny<Metadata>(),
 					It.IsAny<DateTime?>(),
 					It.IsAny<CancellationToken>()))
-				.Returns(new AsyncUnaryCall<ValidateUserResponse>(Task.FromResult(validateUserResponse), null!, null!, null!, null!));
+				.Returns(new AsyncUnaryCall<GetUserCredentialsResponse>(Task.FromResult(getUserCredentialsResponse), null!, null!, null!, null!));
 			JwtServiceMock.Setup(service => service.GetCookieName()).Returns(CookieName);
 			JwtServiceMock.Setup(service => service.GetLifetime()).Returns(lifetime);
 			JwtServiceMock.Setup(service => service.GenerateToken(It.Is<string>(s => s == Login))).Returns(token);
+			PasswordServiceMock.Setup(service => service.ValidateCredentials(
+					It.Is<string>(s => s == Password),
+					It.Is<string>(s => s == PasswordHash),
+					It.Is<string>(s => s == PasswordSalt)))
+				.Returns(true);
 
-			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object)
+			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object, PasswordServiceMock.Object)
 			{
 				ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
 			};
@@ -158,7 +177,7 @@ namespace UsersMicroserviceTests.Controllers
 		public void LogoutTest()
 		{
 			JwtServiceMock.Setup(service => service.GetCookieName()).Returns(CookieName);
-			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object)
+			var controller = new UsersController(UsersServiceClientMock.Object, JwtServiceMock.Object, PasswordServiceMock.Object)
 			{
 				ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext() }
 			};

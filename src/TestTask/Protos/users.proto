@@ -2,67 +2,48 @@ syntax = "proto3";
 
 package users;
 
-// Описание сервиса управления пользователями
+// РћРїРёСЃР°РЅРёРµ СЃРµСЂРІРёСЃР° СѓРїСЂР°РІР»РµРЅРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏРјРё
 service UsersService {
-  // Проверяет наличие пользователя с указанным логином
+  // РџСЂРѕРІРµСЂСЏРµС‚ РЅР°Р»РёС‡РёРµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ СЃ СѓРєР°Р·Р°РЅРЅС‹Рј Р»РѕРіРёРЅРѕРј
   rpc IsUserExists(IsUserExistsRequest) returns (IsUserExistsResponse);
 
-  // Регистрация нового пользователя
+  // Р РµРіРёСЃС‚СЂР°С†РёСЏ РЅРѕРІРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
   rpc AddUser(AddUserRequest) returns (AddUserResponse);
 
-  // Проверка пользователя по логину и паролю
-  rpc ValidateUser(ValidateUserRequest) returns (ValidateUserResponse);
-
-  // Получение курсов по логину
-  rpc GetRates(GetRatesRequest) returns (GetRatesResponse);
+  // РџРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… РґР»СЏ Р°СѓС‚РµРЅС‚РёС„РёС†РєР°С†РёРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕ Р»РѕРіРёРЅСѓ
+  rpc GetUserCredentials(GetUserCredentialsRequest) returns (GetUserCredentialsResponse);
 }
 
-// Запрос проверки существования пользователя
+// Р—Р°РїСЂРѕСЃ РїСЂРѕРІРµСЂРєРё СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 message IsUserExistsRequest {
   string login = 1;
 }
 
-// Ответ проверки существования пользователя
+// РћС‚РІРµС‚ РїСЂРѕРІРµСЂРєРё СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 message IsUserExistsResponse {
   bool exists = 1;
 }
 
-// Запрос добавления нового пользователя
+// Р—Р°РїСЂРѕСЃ РґРѕР±Р°РІР»РµРЅРёСЏ РЅРѕРІРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 message AddUserRequest {
   string login = 1;
-  string password = 2;
-  repeated string codes = 3;
+  string passwordHash = 2;
+  string passwordSalt = 3;
+  repeated string codes = 4;
 }
 
-// Ответ успешного добавления пользователя
+// РћС‚РІРµС‚ СѓСЃРїРµС€РЅРѕРіРѕ РґРѕР±Р°РІР»РµРЅРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 message AddUserResponse {
   bool success = 1;
 }
 
-// Запрос авторизации пользователя
-message ValidateUserRequest {
-  string login = 1;
-  string password = 2;
+// Р—Р°РїСЂРѕСЃ РЅР° РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… РґР»СЏ Р°СѓС‚РµРЅС‚РёС„РёС†РєР°С†РёРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕ Р»РѕРіРёРЅСѓ
+message GetUserCredentialsRequest {
+	string login = 1;
 }
 
-// Ответ успешной авторизации пользователя
-message ValidateUserResponse {
-  bool correct = 1;
-}
-
-// Запрос получения кодов пользователя
-message GetRatesRequest {
-  string login = 1;
-}
-
-// Сообщение с информацией о валюте и её курсе
-message CurrencyRate {
-  string code = 1; // Код валюты (например, EUR)
-  string name = 2; // Наименование валюты.
-  string rate = 3; // Курс валюты относительно базовой валюты (рубля)
-}
-
-// Ответ с информацией о курсах валют
-message GetRatesResponse {
-  repeated CurrencyRate rates = 1; // Массив валют
+// РћС‚РІРµС‚ РЅР° РїРѕР»СѓС‡РµРЅРёРµ РґР°РЅРЅС‹С… РґР»СЏ Р°СѓС‚РµРЅС‚РёС„РёС†РєР°С†РёРё РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РїРѕ Р»РѕРіРёРЅСѓ
+message GetUserCredentialsResponse {
+	string passwordHash = 1;
+	string passwordSalt = 2;
 }

@@ -20,7 +20,7 @@ namespace FinanceMicroservice
 			builder.Services.AddControllers();
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
-			builder.Services.AddGrpcClient<Users.UsersService.UsersServiceClient>(options => options.Address = new Uri(databaseMicroserviceAddress));
+			builder.Services.AddGrpcClient<Currency.CurrencyService.CurrencyServiceClient>(options => options.Address = new Uri(databaseMicroserviceAddress));
 
 			builder.Services.AddAuthentication(options =>
 				{

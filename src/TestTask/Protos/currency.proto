@@ -2,35 +2,35 @@ syntax = "proto3";
 
 package currency;
 
-// Сервис обмена валютной информацией между системами
+// РЎРµСЂРІРёСЃ РѕР±РјРµРЅР° РІР°Р»СЋС‚РЅРѕР№ РёРЅС„РѕСЂРјР°С†РёРµР№ РјРµР¶РґСѓ СЃРёСЃС‚РµРјР°РјРё
 service CurrencyService {
-  rpc SetCurrencyRates(SetCurrencyRatesRequest) returns (SetCurrencyRatesResponse); // Метод отправки валютных курсов
-  rpc GetCurrencyRates(GetCurrencyRatesRequest) returns (GetCurrencyRatesResponse); // Метод получения валютных курсов
+  rpc SetCurrencyRates(SetCurrencyRatesRequest) returns (SetCurrencyRatesResponse); // РњРµС‚РѕРґ РѕС‚РїСЂР°РІРєРё РІР°Р»СЋС‚РЅС‹С… РєСѓСЂСЃРѕРІ
+  rpc GetCurrencyRatesForUser(GetCurrencyRatesForUserRequest) returns (GetCurrencyRatesForUserResponse); // РњРµС‚РѕРґ РїРѕР»СѓС‡РµРЅРёСЏ РІР°Р»СЋС‚РЅС‹С… РєСѓСЂСЃРѕРІ РґР»СЏ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 }
 
-// Сообщение с информацией о валюте и её курсе
+// РЎРѕРѕР±С‰РµРЅРёРµ СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ Рѕ РІР°Р»СЋС‚Рµ Рё РµС‘ РєСѓСЂСЃРµ
 message CurrencyRate {
-  string code = 1; // Код валюты (например, EUR)
-  string name = 2; // Наименование валюты.
-  string rate = 3; // Курс валюты относительно базовой валюты (рубля)
+  string code = 1; // РљРѕРґ РІР°Р»СЋС‚С‹ (РЅР°РїСЂРёРјРµСЂ, EUR)
+  string name = 2; // РќР°РёРјРµРЅРѕРІР°РЅРёРµ РІР°Р»СЋС‚С‹.
+  string rate = 3; // РљСѓСЂСЃ РІР°Р»СЋС‚С‹ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ Р±Р°Р·РѕРІРѕР№ РІР°Р»СЋС‚С‹ (СЂСѓР±Р»СЏ)
 }
 
-// Запрос передачи списка валют и их курсов
+// Р—Р°РїСЂРѕСЃ РїРµСЂРµРґР°С‡Рё СЃРїРёСЃРєР° РІР°Р»СЋС‚ Рё РёС… РєСѓСЂСЃРѕРІ
 message SetCurrencyRatesRequest {
-  repeated CurrencyRate rates = 1; // Массив валют
+  repeated CurrencyRate rates = 1; // РњР°СЃСЃРёРІ РІР°Р»СЋС‚
 }
 
-// Простое подтверждение успешной обработки запроса
+// РџСЂРѕСЃС‚РѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СѓСЃРїРµС€РЅРѕР№ РѕР±СЂР°Р±РѕС‚РєРё Р·Р°РїСЂРѕСЃР°
 message SetCurrencyRatesResponse {
-  bool success = 1; // Флаг успешного завершения операции
+  bool success = 1; // Р¤Р»Р°Рі СѓСЃРїРµС€РЅРѕРіРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ РѕРїРµСЂР°С†РёРё
 }
 
-// Запрос получения курсов валют
-message GetCurrencyRatesRequest {
-  repeated string codes = 1; // Массив кодов валют
+// Р—Р°РїСЂРѕСЃ РїРѕР»СѓС‡РµРЅРёСЏ РєСѓСЂСЃРѕРІ РІР°Р»СЋС‚ РґР»СЏ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+message GetCurrencyRatesForUserRequest {
+  string login = 1; // Р›РѕРіРёРЅ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
 }
 
-// Простое подтверждение успешной обработки запроса
-message GetCurrencyRatesResponse {
-  repeated CurrencyRate rates = 1; // Массив валют
+// РџСЂРѕСЃС‚РѕРµ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ СѓСЃРїРµС€РЅРѕР№ РѕР±СЂР°Р±РѕС‚РєРё Р·Р°РїСЂРѕСЃР°
+message GetCurrencyRatesForUserResponse {
+  repeated CurrencyRate rates = 1; // РњР°СЃСЃРёРІ РІР°Р»СЋС‚
 }

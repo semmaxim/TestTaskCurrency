@@ -12,42 +12,34 @@ public class UsersService(TestTaskDbContext dbContext) : Users.UsersService.User
 	{
 		return new IsUserExistsResponse
 		{
-			Exists = await dbContext.Users.FirstOrDefaultAsync(user => user.Name == request.Login) != null
+			Exists = await dbContext.Users.FirstOrDefaultAsync(user => user.Name == request.Login, context.CancellationToken) != null
 		};
 	}
 
 	public override async Task<AddUserResponse> AddUser(AddUserRequest request, ServerCallContext context)
 	{
+		var currencies = await dbContext.Currency.Where(currency => request.Codes.Contains(currency.Code)).ToListAsync(context.CancellationToken);
 		var newUser = new User
 		{
 			Name = request.Login,
-			Password = request.Password,
-			ObservableCurrencyCodes = request.Codes.ToList()
+			PasswordHash = request.PasswordHash,
+			PasswordSalt = request.PasswordSalt,
+			Currencies = currencies
 		};
-		await dbContext.Users.AddAsync(newUser);
-		await dbContext.SaveChangesAsync();
+
+		dbContext.Users.Add(newUser);
+
+		await dbContext.SaveChangesAsync(context.CancellationToken);
 		return new AddUserResponse { Success = true };
 	}
 
-	public override async Task<ValidateUserResponse> ValidateUser(ValidateUserRequest request, ServerCallContext context)
+	public override async Task<GetUserCredentialsResponse> GetUserCredentials(GetUserCredentialsRequest request, ServerCallContext context)
 	{
-		return new ValidateUserResponse
+		var result = await dbContext.Users.FirstOrDefaultAsync(user => user.Name == request.Login, context.CancellationToken);
+		return new GetUserCredentialsResponse
 		{
-			Correct = await dbContext.Users.FirstOrDefaultAsync(user => user.Name == request.Login && user.Password == request.Password) != null
+			PasswordHash = result?.PasswordHash,
+			PasswordSalt = result?.PasswordSalt
 		};
-	}
-
-	public override async Task<GetRatesResponse> GetRates(GetRatesRequest request, ServerCallContext context)
-	{
-		var codes = (await dbContext.Users.FirstOrDefaultAsync(user => user.Name == request.Login))?.ObservableCurrencyCodes ?? [];
-		var rates = await dbContext.Currency.Where(currency => codes.Contains(currency.Code)).ToListAsync();
-		var result = new GetRatesResponse();
-		result.Rates.AddRange(rates.Select(currency => new CurrencyRate
-		{
-			Code = currency.Code,
-			Name = currency.Name,
-			Rate = currency.Rate.ToString(NumberFormatInfo.InvariantInfo)
-		}));
-		return result;
 	}
 }

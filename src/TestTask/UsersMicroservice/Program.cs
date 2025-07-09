@@ -1,4 +1,5 @@
 using JwtLibrary.Services;
+using UsersMicroservice.Services;
 
 namespace UsersMicroservice;
 
@@ -22,6 +23,7 @@ public class Program
 		builder.Services.AddGrpcClient<Users.UsersService.UsersServiceClient>(options => options.Address = new Uri(databaseMicroserviceAddress));
 
 		builder.Services.AddSingleton<IJwtService, JwtService>();
+		builder.Services.AddSingleton<IPasswordService, PasswordService>();
 
 		var app = builder.Build();
 

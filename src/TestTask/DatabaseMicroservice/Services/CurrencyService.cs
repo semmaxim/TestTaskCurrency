@@ -30,7 +30,7 @@ public class CurrencyService(TestTaskDbContext dbContext) : Currency.CurrencySer
 		foreach (var code in currencyForDeleteCodes)
 		{
 			var oldCurrency = oldCurrencies[code];
-			dbContext.Currency.Remove(oldCurrency);
+			oldCurrency.Rate = null;
 		}
 
 		foreach (var code in currencyForModifyCodes)
@@ -50,20 +50,20 @@ public class CurrencyService(TestTaskDbContext dbContext) : Currency.CurrencySer
 		return new SetCurrencyRatesResponse { Success = true };
 	}
 
-	public override async Task<GetCurrencyRatesResponse> GetCurrencyRates(GetCurrencyRatesRequest request, ServerCallContext context)
+	public override async Task<GetCurrencyRatesForUserResponse> GetCurrencyRatesForUser(GetCurrencyRatesForUserRequest request, ServerCallContext context)
 	{
-		var currencies = await dbContext.Currency
-			.Where(currency => request.Codes.Contains(currency.Code))
+		var currencies = await dbContext.Users
+			.Where(user => user.Name == request.Login)
+			.SelectMany(user => user.Currencies)
 			.Select(currency => new CurrencyRate
 			{
 				Name = currency.Name,
 				Code = currency.Code,
-				Rate = currency.Rate.ToString(NumberFormatInfo.InvariantInfo)
+				Rate = currency.Rate == null ? String.Empty : currency.Rate.Value.ToString(NumberFormatInfo.InvariantInfo)
 			})
 			.OrderBy(rate => rate.Code)
 			.ToListAsync();
-		var result = new GetCurrencyRatesResponse();
-		result.Rates.AddRange(currencies);
+		var result = new GetCurrencyRatesForUserResponse { Rates = { currencies } };
 		return result;
 	}
 }
